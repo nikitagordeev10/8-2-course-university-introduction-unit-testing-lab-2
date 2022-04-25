@@ -7,6 +7,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 #include "common.h"
 #include "text/text.h"
 
@@ -30,6 +31,6 @@ void load(text txt, char *filename)
 
     /* Считываем содержимое строка за строкой */
     while (fgets(buf, MAXLINE, f)) {
-        append_line(txt, buf);
+        append_line(txt, strtok(buf, "\n"));
     }
 }

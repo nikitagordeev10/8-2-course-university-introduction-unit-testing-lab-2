@@ -39,13 +39,13 @@ int main()
         /* Распознаем поддерживаемую команду */
         
         /* Завершаем работу редактора */
-        if (strcmp(cmd, "quit") == 0) {
+        if (strcmp(cmd, "quit") == 0 || strcmp(cmd, "q") == 0) {
             fprintf(stderr, "Bye!\n");
             break;
         }
 
         /* Загружаем содержимое файла, заданного параметром */
-        if (strcmp(cmd, "load") == 0) {
+        if (strcmp(cmd, "load") == 0 || strcmp(cmd, "l") == 0) {
             if ((arg = strtok(NULL, " \n")) == NULL) {
                 fprintf(stderr, "Usage: load filename\n");
             } else {
@@ -53,13 +53,22 @@ int main()
             }
             continue;
         }
-        
-        /* Функция сохранения содержимого файла */
-        if (strcmp(cmd, "save") == 0) {
-            if ((arg = strtok(NULL, " \n")) == NULL) {
-                fprintf(stderr, "Usage: upload filename\n");
+
+        if (strcmp(cmd, "move") == 0 || strcmp(cmd, "s") == 0) {
+            char *line, *col;
+            if ((line = strtok(NULL, " \n")) == NULL
+                || (col = strtok(NULL, " \n")) == NULL) {
+                fprintf(stderr, "Usage: m line column\n");
+            } else {
+                move_crsr(txt, atoi(line), atoi(col));
             }
-            else {
+            continue;
+        }
+
+        if (strcmp(cmd, "save") == 0 || strcmp(cmd, "s") == 0) {
+            if ((arg = strtok(NULL, " \n")) == NULL) {
+                fprintf(stderr, "Usage: save filename\n");
+            } else {
                 save(txt, arg);
             }
             continue;

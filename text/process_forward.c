@@ -37,8 +37,9 @@ void process_forward(
     
     /* К каждой строке текста применяем обработчик */
     while (current) {
-        if (txt->cursor->line == current) 
+        if (txt->cursor->line == current) {
             cursor_position = txt->cursor->position;
+        }
         else
             cursor_position = -1;
         process(index, current->contents, cursor_position, data);

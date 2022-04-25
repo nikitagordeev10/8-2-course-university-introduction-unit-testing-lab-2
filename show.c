@@ -32,9 +32,18 @@ static void show_line(int index, char *contents, int cursor, void *data)
     
     /* Декларируем неиспользуемые параметры */
     UNUSED(index);
-    UNUSED(cursor);
     UNUSED(data);
+
+    if (cursor != -1) {
+        char temp = contents[cursor];
+        contents[cursor] = '\0';
+        printf("%s", contents);
+        printf("|");
+        contents[cursor] = temp;
+        printf("%s\n", contents + cursor);
+        return;
+    }
     
     /* Выводим строку на экран */
-    printf("%s", contents);
+    printf("%s\n", contents);
 }
