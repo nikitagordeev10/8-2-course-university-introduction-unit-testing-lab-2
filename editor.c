@@ -53,6 +53,17 @@ int main()
             }
             continue;
         }
+        
+        /* Функция сохранения содержимого файла */
+        if (strcmp(cmd, "save") == 0) {
+            if ((arg = strtok(NULL, " \n")) == NULL) {
+                fprintf(stderr, "Usage: upload filename\n");
+            }
+            else {
+                save(txt, arg);
+            }
+            continue;
+        }
 
         /* Выводим текст */
         if (strcmp(cmd, "show") == 0) {
