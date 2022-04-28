@@ -1,0 +1,11 @@
+*.o
+*.txt
+editor/editor
+*.a
+.vscode/
+.qmake.stash
+Makefile
+build/
+text/Makefile
+editor/Makefile
+
