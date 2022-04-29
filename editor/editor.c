@@ -80,6 +80,11 @@ int main()
             continue;
         }
         
+        if (strcmp(cmd, "showunderscores") == 0) {
+            showunderscores(txt);
+            continue;
+        }
+
         /* Если команда не известна */
         fprintf(stderr, "Unknown command: %s\n", cmd);
     }
