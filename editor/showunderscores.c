@@ -1,7 +1,7 @@
 /**
  * showunderscores.c -- реализует команду вывода хранимого текста на экран c заменой пробелов символом подчеркивания
  *
- * Copyright (c) 2017, Alexander Borodin <aborod@petrsu.ru>
+ * Copyright (c) 2022, Nikita Gordeev <gordeev@petrsu.ru>
  *
  * This code is licensed under a MIT-style license.
  */

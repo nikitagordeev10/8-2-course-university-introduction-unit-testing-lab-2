@@ -1,3 +1,11 @@
+/**
+ * save.c -- функция сохранения текста
+ *
+ * Copyright (c) 2022, Nikita Gordeev <gordeev@petrsu.ru>
+ *
+ * This code is licensed under a MIT-style license.
+ */
+
 #include "common.h"
 #include <stdio.h>
 

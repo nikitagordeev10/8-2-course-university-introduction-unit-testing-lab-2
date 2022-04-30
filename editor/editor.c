@@ -20,7 +20,8 @@ int main()
     char cmdline[MAXLINE + 1];
     char *cmd;
     char *arg;
-    
+    char *arg2;
+
     /* Создаем объект для представления текста */
     text txt = create_text();
 
@@ -60,7 +61,21 @@ int main()
                 || (col = strtok(NULL, " \n")) == NULL) {
                 fprintf(stderr, "Usage: m line column\n");
             } else {
-                move_crsr(txt, atoi(line), atoi(col));
+                move(txt, atoi(line), atoi(col));
+            }
+            continue;
+        }
+
+        /* Перемещение курсора по строкам и символам */
+        if (strcmp(cmd, "move") == 0 || strcmp(cmd, "m") == 0 ) {
+            if ((arg = strtok(NULL, " \n")) == NULL
+                || (arg2 = strtok(NULL, " \n")) == NULL) {
+                    fprintf(stderr, "Not enough arguments\n");
+            } else {
+                int line = atoi(arg);
+                int pos = atoi(arg2);
+                move_crsr(txt, line, pos);
+                show(txt);
             }
             continue;
         }
@@ -85,6 +100,10 @@ int main()
             continue;
         }
 
+        if (strcmp(cmd, "mpweb") == 0) {
+            mpweb(txt);
+            continue;
+        }
         /* Если команда не известна */
         fprintf(stderr, "Unknown command: %s\n", cmd);
     }

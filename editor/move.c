@@ -1,7 +1,15 @@
+/**
+ * move_crsr.c - команду перемещения в заданную позициюа
+ *
+ * Copyright (c) 2022, Nikita Gordeev <gordeev@petrsu.ru>
+ *
+ * This code is licensed under a MIT-style license.
+ */
+
 #include "_text.h"
 #include "text.h"
 
-void move_crsr(text txt, int line, int col) {
+void move(text txt, int line, int col) {
     node *current = txt->begin;
     int index = 0;
     while (current) {

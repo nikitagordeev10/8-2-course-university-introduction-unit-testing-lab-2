@@ -6,6 +6,8 @@ CONFIG -= qt
 
 SOURCES = editor.c \
             load.c \
+            move.c \
+            mpweb.c \
             save.c \
             show.c \
             showunderscores.c
