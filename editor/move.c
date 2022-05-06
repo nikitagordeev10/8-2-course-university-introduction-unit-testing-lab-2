@@ -1,5 +1,5 @@
 /**
- * move_crsr.c - команду перемещения в заданную позициюа
+ * move.c - команду перемещения в заданную позициюа
  *
  * Copyright (c) 2022, Nikita Gordeev <gordeev@petrsu.ru>
  *

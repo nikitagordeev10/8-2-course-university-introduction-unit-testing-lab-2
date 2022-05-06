@@ -1,26 +1,41 @@
 /**
- * save.c -- функция сохранения текста
+ * save.c - функция сохранения текста
  *
  * Copyright (c) 2022, Nikita Gordeev <gordeev@petrsu.ru>
  *
  * This code is licensed under a MIT-style license.
  */
 
-#include "common.h"
 #include <stdio.h>
+#include "common.h"
+#include "_text.h"
+#include "text.h"
 
-void write_line(int index, char *contents, int cursor, void *data) {
-    UNUSED(index);
-    UNUSED(cursor);
-    FILE* file = data;
-    fprintf(file, "%s\n", contents);
-}
 
 void save(text txt, char *filename) {
-    FILE* file = fopen(filename, "w");
-    if (!file) {
-        printf("The file %s cannot be opened\n", filename);
+
+    FILE *f;
+
+    if (txt == NULL || txt->length == 0) {
+        fprintf(stderr, "The text doesn't exist\n");
         return;
     }
-    process_forward(txt, write_line, file);
+
+    /* Открываем файл для чтения, контролируя ошибки */
+    if ((f = fopen(filename, "w")) == NULL) {
+        fprintf(stderr, "File %s can't be opened\n", filename);
+        return;
+    }
+
+    assert(txt->begin != NULL && txt->end != NULL);
+
+    node *current = txt->begin;
+
+    do {
+        fprintf(f, "%s\n", current->contents);
+        current = current->next;
+    } while(current);
+
+    fprintf(stdout, "Save file successeed!\n");
+    fclose (f);
 }

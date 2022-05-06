@@ -66,19 +66,6 @@ int main()
             continue;
         }
 
-        /* Перемещение курсора по строкам и символам */
-        if (strcmp(cmd, "move") == 0 || strcmp(cmd, "m") == 0 ) {
-            if ((arg = strtok(NULL, " \n")) == NULL
-                || (arg2 = strtok(NULL, " \n")) == NULL) {
-                    fprintf(stderr, "Not enough arguments\n");
-            } else {
-                int line = atoi(arg);
-                int pos = atoi(arg2);
-                move_crsr(txt, line, pos);
-                show(txt);
-            }
-            continue;
-        }
 
         if (strcmp(cmd, "save") == 0 || strcmp(cmd, "s") == 0) {
             if ((arg = strtok(NULL, " \n")) == NULL) {
@@ -104,6 +91,14 @@ int main()
             mpweb(txt);
             continue;
         }
+
+        /* Перемещение строки с курсором перед предыдущей  */
+        if (strcmp(cmd, "rn") == 0) {
+            rn(txt);
+            continue;
+        }
+
+
         /* Если команда не известна */
         fprintf(stderr, "Unknown command: %s\n", cmd);
     }
