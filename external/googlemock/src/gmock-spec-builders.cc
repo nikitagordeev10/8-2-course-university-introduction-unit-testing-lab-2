@@ -26,6 +26,8 @@
 // THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+// Author: wan@google.com (Zhanyong Wan)
 
 // Google Mock - a framework for writing C++ mock classes.
 //
@@ -35,29 +37,15 @@
 #include "gmock/gmock-spec-builders.h"
 
 #include <stdlib.h>
-
 #include <iostream>  // NOLINT
 #include <map>
-#include <memory>
 #include <set>
 #include <string>
-#include <vector>
-
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "gtest/internal/gtest-port.h"
 
 #if GTEST_OS_CYGWIN || GTEST_OS_LINUX || GTEST_OS_MAC
-#include <unistd.h>  // NOLINT
-#endif
-
-// Silence C4800 (C4800: 'int *const ': forcing value
-// to bool 'true' or 'false') for MSVC 15
-#ifdef _MSC_VER
-#if _MSC_VER == 1900
-#pragma warning(push)
-#pragma warning(disable : 4800)
-#endif
+# include <unistd.h>  // NOLINT
 #endif
 
 namespace testing {
@@ -72,8 +60,7 @@ GTEST_API_ void LogWithLocation(testing::internal::LogSeverity severity,
                                 const char* file, int line,
                                 const std::string& message) {
   ::std::ostringstream s;
-  s << internal::FormatFileLocation(file, line) << " " << message
-    << ::std::endl;
+  s << file << ":" << line << ": " << message << ::std::endl;
   Log(severity, s.str(), 0);
 }
 
@@ -112,40 +99,26 @@ void ExpectationBase::RetireAllPreRequisites()
     return;
   }
 
-  ::std::vector<ExpectationBase*> expectations(1, this);
-  while (!expectations.empty()) {
-    ExpectationBase* exp = expectations.back();
-    expectations.pop_back();
-
-    for (ExpectationSet::const_iterator it =
-             exp->immediate_prerequisites_.begin();
-         it != exp->immediate_prerequisites_.end(); ++it) {
-      ExpectationBase* next = it->expectation_base().get();
-      if (!next->is_retired()) {
-        next->Retire();
-        expectations.push_back(next);
-      }
+  for (ExpectationSet::const_iterator it = immediate_prerequisites_.begin();
+       it != immediate_prerequisites_.end(); ++it) {
+    ExpectationBase* const prerequisite = it->expectation_base().get();
+    if (!prerequisite->is_retired()) {
+      prerequisite->RetireAllPreRequisites();
+      prerequisite->Retire();
     }
   }
 }
 
-// Returns true if and only if all pre-requisites of this expectation
-// have been satisfied.
+// Returns true iff all pre-requisites of this expectation have been
+// satisfied.
 bool ExpectationBase::AllPrerequisitesAreSatisfied() const
     GTEST_EXCLUSIVE_LOCK_REQUIRED_(g_gmock_mutex) {
   g_gmock_mutex.AssertHeld();
-  ::std::vector<const ExpectationBase*> expectations(1, this);
-  while (!expectations.empty()) {
-    const ExpectationBase* exp = expectations.back();
-    expectations.pop_back();
-
-    for (ExpectationSet::const_iterator it =
-             exp->immediate_prerequisites_.begin();
-         it != exp->immediate_prerequisites_.end(); ++it) {
-      const ExpectationBase* next = it->expectation_base().get();
-      if (!next->IsSatisfied()) return false;
-      expectations.push_back(next);
-    }
+  for (ExpectationSet::const_iterator it = immediate_prerequisites_.begin();
+       it != immediate_prerequisites_.end(); ++it) {
+    if (!(it->expectation_base()->IsSatisfied()) ||
+        !(it->expectation_base()->AllPrerequisitesAreSatisfied()))
+      return false;
   }
   return true;
 }
@@ -154,28 +127,19 @@ bool ExpectationBase::AllPrerequisitesAreSatisfied() const
 void ExpectationBase::FindUnsatisfiedPrerequisites(ExpectationSet* result) const
     GTEST_EXCLUSIVE_LOCK_REQUIRED_(g_gmock_mutex) {
   g_gmock_mutex.AssertHeld();
-  ::std::vector<const ExpectationBase*> expectations(1, this);
-  while (!expectations.empty()) {
-    const ExpectationBase* exp = expectations.back();
-    expectations.pop_back();
-
-    for (ExpectationSet::const_iterator it =
-             exp->immediate_prerequisites_.begin();
-         it != exp->immediate_prerequisites_.end(); ++it) {
-      const ExpectationBase* next = it->expectation_base().get();
-
-      if (next->IsSatisfied()) {
-        // If *it is satisfied and has a call count of 0, some of its
-        // pre-requisites may not be satisfied yet.
-        if (next->call_count_ == 0) {
-          expectations.push_back(next);
-        }
-      } else {
-        // Now that we know next is unsatisfied, we are not so interested
-        // in whether its pre-requisites are satisfied.  Therefore we
-        // don't iterate into it here.
-        *result += *it;
+  for (ExpectationSet::const_iterator it = immediate_prerequisites_.begin();
+       it != immediate_prerequisites_.end(); ++it) {
+    if (it->expectation_base()->IsSatisfied()) {
+      // If *it is satisfied and has a call count of 0, some of its
+      // pre-requisites may not be satisfied yet.
+      if (it->expectation_base()->call_count_ == 0) {
+        it->expectation_base()->FindUnsatisfiedPrerequisites(result);
       }
+    } else {
+      // Now that we know *it is unsatisfied, we are not so interested
+      // in whether its pre-requisites are satisfied.  Therefore we
+      // don't recursively call FindUnsatisfiedPrerequisites() here.
+      *result += *it;
     }
   }
 }
@@ -194,12 +158,11 @@ void ExpectationBase::DescribeCallCountTo(::std::ostream* os) const
 
   // Describes the state of the expectation (e.g. is it satisfied?
   // is it active?).
-  *os << " - "
-      << (IsOverSaturated() ? "over-saturated"
-          : IsSaturated()   ? "saturated"
-          : IsSatisfied()   ? "satisfied"
-                            : "unsatisfied")
-      << " and " << (is_retired() ? "retired" : "active");
+  *os << " - " << (IsOverSaturated() ? "over-saturated" :
+                   IsSaturated() ? "saturated" :
+                   IsSatisfied() ? "satisfied" : "unsatisfied")
+      << " and "
+      << (is_retired() ? "retired" : "active");
 }
 
 // Checks the action count (i.e. the number of WillOnce() and
@@ -242,12 +205,13 @@ void ExpectationBase::CheckActionCountIfNotDone() const
 
     ::std::stringstream ss;
     DescribeLocationTo(&ss);
-    ss << "Too " << (too_many ? "many" : "few") << " actions specified in "
-       << source_text() << "...\n"
+    ss << "Too " << (too_many ? "many" : "few")
+       << " actions specified in " << source_text() << "...\n"
        << "Expected to be ";
     cardinality().DescribeTo(&ss);
-    ss << ", but has " << (too_many ? "" : "only ") << action_count
-       << " WillOnce()" << (action_count == 1 ? "" : "s");
+    ss << ", but has " << (too_many ? "" : "only ")
+       << action_count << " WillOnce()"
+       << (action_count == 1 ? "" : "s");
     if (repeated_action_specified_) {
       ss << " and a WillRepeatedly()";
     }
@@ -263,10 +227,10 @@ void ExpectationBase::UntypedTimes(const Cardinality& a_cardinality) {
                        ".Times() cannot appear "
                        "more than once in an EXPECT_CALL().");
   } else {
-    ExpectSpecProperty(
-        last_clause_ < kTimes,
-        ".Times() may only appear *before* .InSequence(), .WillOnce(), "
-        ".WillRepeatedly(), or .RetiresOnSaturation(), not after.");
+    ExpectSpecProperty(last_clause_ < kTimes,
+                       ".Times() cannot appear after "
+                       ".InSequence(), .WillOnce(), .WillRepeatedly(), "
+                       "or .RetiresOnSaturation().");
   }
   last_clause_ = kTimes;
 
@@ -282,7 +246,7 @@ GTEST_API_ ThreadLocal<Sequence*> g_gmock_implicit_sequence;
 void ReportUninterestingCall(CallReaction reaction, const std::string& msg) {
   // Include a stack trace only if --gmock_verbose=info is specified.
   const int stack_frames_to_skip =
-      GMOCK_FLAG_GET(verbose) == kInfoVerbosity ? 3 : -1;
+      GMOCK_FLAG(verbose) == kInfoVerbosity ? 3 : -1;
   switch (reaction) {
     case kAllow:
       Log(kInfo, msg, stack_frames_to_skip);
@@ -290,22 +254,20 @@ void ReportUninterestingCall(CallReaction reaction, const std::string& msg) {
     case kWarn:
       Log(kWarning,
           msg +
-              "\nNOTE: You can safely ignore the above warning unless this "
-              "call should not happen.  Do not suppress it by blindly adding "
-              "an EXPECT_CALL() if you don't mean to enforce the call.  "
-              "See "
-              "https://github.com/google/googletest/blob/master/docs/"
-              "gmock_cook_book.md#"
-              "knowing-when-to-expect for details.\n",
+          "\nNOTE: You can safely ignore the above warning unless this "
+          "call should not happen.  Do not suppress it by blindly adding "
+          "an EXPECT_CALL() if you don't mean to enforce the call.  "
+          "See https://github.com/google/googletest/blob/master/googlemock/docs/CookBook.md#"
+          "knowing-when-to-expect for details.\n",
           stack_frames_to_skip);
       break;
     default:  // FAIL
-      Expect(false, nullptr, -1, msg);
+      Expect(false, NULL, -1, msg);
   }
 }
 
 UntypedFunctionMockerBase::UntypedFunctionMockerBase()
-    : mock_obj_(nullptr), name_("") {}
+    : mock_obj_(NULL), name_("") {}
 
 UntypedFunctionMockerBase::~UntypedFunctionMockerBase() {}
 
@@ -344,7 +306,7 @@ const void* UntypedFunctionMockerBase::MockObject() const
     // We protect mock_obj_ under g_gmock_mutex in case this mock
     // function is called from two threads concurrently.
     MutexLock l(&g_gmock_mutex);
-    Assert(mock_obj_ != nullptr, __FILE__, __LINE__,
+    Assert(mock_obj_ != NULL, __FILE__, __LINE__,
            "MockObject() must not be called before RegisterOwner() or "
            "SetOwnerAndName() has been called.");
     mock_obj = mock_obj_;
@@ -361,7 +323,7 @@ const char* UntypedFunctionMockerBase::Name() const
     // We protect name_ under g_gmock_mutex in case this mock
     // function is called from two threads concurrently.
     MutexLock l(&g_gmock_mutex);
-    Assert(name_ != nullptr, __FILE__, __LINE__,
+    Assert(name_ != NULL, __FILE__, __LINE__,
            "Name() must not be called before SetOwnerAndName() has "
            "been called.");
     name = name_;
@@ -372,10 +334,9 @@ const char* UntypedFunctionMockerBase::Name() const
 // Calculates the result of invoking this mock function with the given
 // arguments, prints it, and returns it.  The caller is responsible
 // for deleting the result.
-UntypedActionResultHolderBase* UntypedFunctionMockerBase::UntypedInvokeWith(
-    void* const untyped_args) GTEST_LOCK_EXCLUDED_(g_gmock_mutex) {
-  // See the definition of untyped_expectations_ for why access to it
-  // is unprotected here.
+UntypedActionResultHolderBase*
+UntypedFunctionMockerBase::UntypedInvokeWith(const void* const untyped_args)
+    GTEST_LOCK_EXCLUDED_(g_gmock_mutex) {
   if (untyped_expectations_.size() == 0) {
     // No expectation is set on this mock method - we have an
     // uninteresting call.
@@ -387,26 +348,23 @@ UntypedActionResultHolderBase* UntypedFunctionMockerBase::UntypedInvokeWith(
     const CallReaction reaction =
         Mock::GetReactionOnUninterestingCalls(MockObject());
 
-    // True if and only if we need to print this call's arguments and return
+    // True iff we need to print this call's arguments and return
     // value.  This definition must be kept in sync with
     // the behavior of ReportUninterestingCall().
     const bool need_to_report_uninteresting_call =
         // If the user allows this uninteresting call, we print it
-        // only when they want informational messages.
+        // only when he wants informational messages.
         reaction == kAllow ? LogIsVisible(kInfo) :
-                           // If the user wants this to be a warning, we print
-                           // it only when they want to see warnings.
-            reaction == kWarn
-            ? LogIsVisible(kWarning)
-            :
-            // Otherwise, the user wants this to be an error, and we
-            // should always print detailed information in the error.
-            true;
+        // If the user wants this to be a warning, we print it only
+        // when he wants to see warnings.
+        reaction == kWarn ? LogIsVisible(kWarning) :
+        // Otherwise, the user wants this to be an error, and we
+        // should always print detailed information in the error.
+        true;
 
     if (!need_to_report_uninteresting_call) {
       // Perform the action without printing the call information.
-      return this->UntypedPerformDefaultAction(
-          untyped_args, "Function call: " + std::string(Name()));
+      return this->UntypedPerformDefaultAction(untyped_args, "");
     }
 
     // Warns about the uninteresting call.
@@ -418,7 +376,8 @@ UntypedActionResultHolderBase* UntypedFunctionMockerBase::UntypedInvokeWith(
         this->UntypedPerformDefaultAction(untyped_args, ss.str());
 
     // Prints the function result.
-    if (result != nullptr) result->PrintAsActionResult(&ss);
+    if (result != NULL)
+      result->PrintAsActionResult(&ss);
 
     ReportUninterestingCall(reaction, ss.str());
     return result;
@@ -428,27 +387,27 @@ UntypedActionResultHolderBase* UntypedFunctionMockerBase::UntypedInvokeWith(
   ::std::stringstream ss;
   ::std::stringstream why;
   ::std::stringstream loc;
-  const void* untyped_action = nullptr;
+  const void* untyped_action = NULL;
 
   // The UntypedFindMatchingExpectation() function acquires and
   // releases g_gmock_mutex.
-
   const ExpectationBase* const untyped_expectation =
-      this->UntypedFindMatchingExpectation(untyped_args, &untyped_action,
-                                           &is_excessive, &ss, &why);
-  const bool found = untyped_expectation != nullptr;
+      this->UntypedFindMatchingExpectation(
+          untyped_args, &untyped_action, &is_excessive,
+          &ss, &why);
+  const bool found = untyped_expectation != NULL;
 
-  // True if and only if we need to print the call's arguments
-  // and return value.
+  // True iff we need to print the call's arguments and return value.
   // This definition must be kept in sync with the uses of Expect()
   // and Log() in this function.
   const bool need_to_report_call =
       !found || is_excessive || LogIsVisible(kInfo);
   if (!need_to_report_call) {
     // Perform the action without printing the call information.
-    return untyped_action == nullptr
-               ? this->UntypedPerformDefaultAction(untyped_args, "")
-               : this->UntypedPerformAction(untyped_action, untyped_args);
+    return
+        untyped_action == NULL ?
+        this->UntypedPerformDefaultAction(untyped_args, "") :
+        this->UntypedPerformAction(untyped_action, untyped_args);
   }
 
   ss << "    Function call: " << Name();
@@ -460,51 +419,35 @@ UntypedActionResultHolderBase* UntypedFunctionMockerBase::UntypedInvokeWith(
     untyped_expectation->DescribeLocationTo(&loc);
   }
 
-  UntypedActionResultHolderBase* result = nullptr;
+  UntypedActionResultHolderBase* const result =
+      untyped_action == NULL ?
+      this->UntypedPerformDefaultAction(untyped_args, ss.str()) :
+      this->UntypedPerformAction(untyped_action, untyped_args);
+  if (result != NULL)
+    result->PrintAsActionResult(&ss);
+  ss << "\n" << why.str();
 
-  auto perform_action = [&] {
-    return untyped_action == nullptr
-               ? this->UntypedPerformDefaultAction(untyped_args, ss.str())
-               : this->UntypedPerformAction(untyped_action, untyped_args);
-  };
-  auto handle_failures = [&] {
-    ss << "\n" << why.str();
-
-    if (!found) {
-      // No expectation matches this call - reports a failure.
-      Expect(false, nullptr, -1, ss.str());
-    } else if (is_excessive) {
-      // We had an upper-bound violation and the failure message is in ss.
-      Expect(false, untyped_expectation->file(), untyped_expectation->line(),
-             ss.str());
-    } else {
-      // We had an expected call and the matching expectation is
-      // described in ss.
-      Log(kInfo, loc.str() + ss.str(), 2);
-    }
-  };
-#if GTEST_HAS_EXCEPTIONS
-  try {
-    result = perform_action();
-  } catch (...) {
-    handle_failures();
-    throw;
+  if (!found) {
+    // No expectation matches this call - reports a failure.
+    Expect(false, NULL, -1, ss.str());
+  } else if (is_excessive) {
+    // We had an upper-bound violation and the failure message is in ss.
+    Expect(false, untyped_expectation->file(),
+           untyped_expectation->line(), ss.str());
+  } else {
+    // We had an expected call and the matching expectation is
+    // described in ss.
+    Log(kInfo, loc.str() + ss.str(), 2);
   }
-#else
-  result = perform_action();
-#endif
 
-  if (result != nullptr) result->PrintAsActionResult(&ss);
-  handle_failures();
   return result;
 }
 
 // Returns an Expectation object that references and co-owns exp,
 // which must be an expectation on this mock function.
 Expectation UntypedFunctionMockerBase::GetHandleOf(ExpectationBase* exp) {
-  // See the definition of untyped_expectations_ for why access to it
-  // is unprotected here.
-  for (UntypedExpectations::const_iterator it = untyped_expectations_.begin();
+  for (UntypedExpectations::const_iterator it =
+           untyped_expectations_.begin();
        it != untyped_expectations_.end(); ++it) {
     if (it->get() == exp) {
       return Expectation(*it);
@@ -524,7 +467,8 @@ bool UntypedFunctionMockerBase::VerifyAndClearExpectationsLocked()
     GTEST_EXCLUSIVE_LOCK_REQUIRED_(g_gmock_mutex) {
   g_gmock_mutex.AssertHeld();
   bool expectations_met = true;
-  for (UntypedExpectations::const_iterator it = untyped_expectations_.begin();
+  for (UntypedExpectations::const_iterator it =
+           untyped_expectations_.begin();
        it != untyped_expectations_.end(); ++it) {
     ExpectationBase* const untyped_expectation = it->get();
     if (untyped_expectation->IsOverSaturated()) {
@@ -535,15 +479,15 @@ bool UntypedFunctionMockerBase::VerifyAndClearExpectationsLocked()
     } else if (!untyped_expectation->IsSatisfied()) {
       expectations_met = false;
       ::std::stringstream ss;
-      ss << "Actual function call count doesn't match "
-         << untyped_expectation->source_text() << "...\n";
+      ss  << "Actual function call count doesn't match "
+          << untyped_expectation->source_text() << "...\n";
       // No need to show the source file location of the expectation
       // in the description, as the Expect() call that follows already
       // takes care of it.
       untyped_expectation->MaybeDescribeExtraMatcherTo(&ss);
       untyped_expectation->DescribeCallCountTo(&ss);
-      Expect(false, untyped_expectation->file(), untyped_expectation->line(),
-             ss.str());
+      Expect(false, untyped_expectation->file(),
+             untyped_expectation->line(), ss.str());
     }
   }
 
@@ -564,13 +508,6 @@ bool UntypedFunctionMockerBase::VerifyAndClearExpectationsLocked()
   return expectations_met;
 }
 
-CallReaction intToCallReaction(int mock_behavior) {
-  if (mock_behavior >= kAllow && mock_behavior <= kFail) {
-    return static_cast<internal::CallReaction>(mock_behavior);
-  }
-  return kWarn;
-}
-
 }  // namespace internal
 
 // Class Mock.
@@ -584,15 +521,15 @@ typedef std::set<internal::UntypedFunctionMockerBase*> FunctionMockers;
 // expectations.
 struct MockObjectState {
   MockObjectState()
-      : first_used_file(nullptr), first_used_line(-1), leakable(false) {}
+      : first_used_file(NULL), first_used_line(-1), leakable(false) {}
 
   // Where in the source file an ON_CALL or EXPECT_CALL is first
   // invoked on this mock object.
   const char* first_used_file;
   int first_used_line;
-  ::std::string first_used_test_suite;
+  ::std::string first_used_test_case;
   ::std::string first_used_test;
-  bool leakable;  // true if and only if it's OK to leak the object.
+  bool leakable;  // true iff it's OK to leak the object.
   FunctionMockers function_mockers;  // All registered methods of the object.
 };
 
@@ -610,7 +547,11 @@ class MockObjectRegistry {
   // object alive.  Therefore we report any living object as test
   // failure, unless the user explicitly asked us to ignore it.
   ~MockObjectRegistry() {
-    if (!GMOCK_FLAG_GET(catch_leaked_mocks)) return;
+    // "using ::std::cout;" doesn't work with Symbian's STLport, where cout is
+    // a macro.
+
+    if (!GMOCK_FLAG(catch_leaked_mocks))
+      return;
 
     int leaked_count = 0;
     for (StateMap::const_iterator it = states_.begin(); it != states_.end();
@@ -618,7 +559,7 @@ class MockObjectRegistry {
       if (it->second.leakable)  // The user said it's fine to leak this object.
         continue;
 
-      // FIXME: Print the type of the leaked object.
+      // TODO(wan@google.com): Print the type of the leaked object.
       // This can help the user identify the leaked object.
       std::cout << "\n";
       const MockObjectState& state = it->second;
@@ -626,23 +567,17 @@ class MockObjectRegistry {
                                                 state.first_used_line);
       std::cout << " ERROR: this mock object";
       if (state.first_used_test != "") {
-        std::cout << " (used in test " << state.first_used_test_suite << "."
-                  << state.first_used_test << ")";
+        std::cout << " (used in test " << state.first_used_test_case << "."
+             << state.first_used_test << ")";
       }
       std::cout << " should be deleted but never is. Its address is @"
-                << it->first << ".";
+           << it->first << ".";
       leaked_count++;
     }
     if (leaked_count > 0) {
-      std::cout << "\nERROR: " << leaked_count << " leaked mock "
-                << (leaked_count == 1 ? "object" : "objects")
-                << " found at program exit. Expectations on a mock object are "
-                   "verified when the object is destructed. Leaking a mock "
-                   "means that its expectations aren't verified, which is "
-                   "usually a test bug. If you really intend to leak a mock, "
-                   "you can suppress this error using "
-                   "testing::Mock::AllowLeak(mock_object), or you may use a "
-                   "fake or stub instead of a mock.\n";
+      std::cout << "\nERROR: " << leaked_count
+           << " leaked mock " << (leaked_count == 1 ? "object" : "objects")
+           << " found at program exit.\n";
       std::cout.flush();
       ::std::cerr.flush();
       // RUN_ALL_TESTS() has already returned when this destructor is
@@ -709,12 +644,11 @@ void Mock::UnregisterCallReaction(const void* mock_obj)
 // Returns the reaction Google Mock will have on uninteresting calls
 // made on the given mock object.
 internal::CallReaction Mock::GetReactionOnUninterestingCalls(
-    const void* mock_obj) GTEST_LOCK_EXCLUDED_(internal::g_gmock_mutex) {
+    const void* mock_obj)
+        GTEST_LOCK_EXCLUDED_(internal::g_gmock_mutex) {
   internal::MutexLock l(&internal::g_gmock_mutex);
-  return (g_uninteresting_call_reaction.count(mock_obj) == 0)
-             ? internal::intToCallReaction(
-                   GMOCK_FLAG_GET(default_mock_behavior))
-             : g_uninteresting_call_reaction[mock_obj];
+  return (g_uninteresting_call_reaction.count(mock_obj) == 0) ?
+      internal::kDefault : g_uninteresting_call_reaction[mock_obj];
 }
 
 // Tells Google Mock to ignore mock_obj when checking for leaked mock
@@ -735,7 +669,7 @@ bool Mock::VerifyAndClearExpectations(void* mock_obj)
 }
 
 // Verifies all expectations on the given mock object and clears its
-// default actions and expectations.  Returns true if and only if the
+// default actions and expectations.  Returns true iff the
 // verification was successful.
 bool Mock::VerifyAndClear(void* mock_obj)
     GTEST_LOCK_EXCLUDED_(internal::g_gmock_mutex) {
@@ -772,19 +706,6 @@ bool Mock::VerifyAndClearExpectationsLocked(void* mock_obj)
   return expectations_met;
 }
 
-bool Mock::IsNaggy(void* mock_obj)
-    GTEST_LOCK_EXCLUDED_(internal::g_gmock_mutex) {
-  return Mock::GetReactionOnUninterestingCalls(mock_obj) == internal::kWarn;
-}
-bool Mock::IsNice(void* mock_obj)
-    GTEST_LOCK_EXCLUDED_(internal::g_gmock_mutex) {
-  return Mock::GetReactionOnUninterestingCalls(mock_obj) == internal::kAllow;
-}
-bool Mock::IsStrict(void* mock_obj)
-    GTEST_LOCK_EXCLUDED_(internal::g_gmock_mutex) {
-  return Mock::GetReactionOnUninterestingCalls(mock_obj) == internal::kFail;
-}
-
 // Registers a mock object and a mock method it owns.
 void Mock::Register(const void* mock_obj,
                     internal::UntypedFunctionMockerBase* mocker)
@@ -801,13 +722,16 @@ void Mock::RegisterUseByOnCallOrExpectCall(const void* mock_obj,
     GTEST_LOCK_EXCLUDED_(internal::g_gmock_mutex) {
   internal::MutexLock l(&internal::g_gmock_mutex);
   MockObjectState& state = g_mock_object_registry.states()[mock_obj];
-  if (state.first_used_file == nullptr) {
+  if (state.first_used_file == NULL) {
     state.first_used_file = file;
     state.first_used_line = line;
     const TestInfo* const test_info =
         UnitTest::GetInstance()->current_test_info();
-    if (test_info != nullptr) {
-      state.first_used_test_suite = test_info->test_suite_name();
+    if (test_info != NULL) {
+      // TODO(wan@google.com): record the test case name when the
+      // ON_CALL or EXPECT_CALL is invoked from SetUpTestCase() or
+      // TearDownTestCase().
+      state.first_used_test_case = test_info->test_case_name();
       state.first_used_test = test_info->name();
     }
   }
@@ -860,7 +784,7 @@ void Mock::ClearDefaultActionsLocked(void* mock_obj)
 Expectation::Expectation() {}
 
 Expectation::Expectation(
-    const std::shared_ptr<internal::ExpectationBase>& an_expectation_base)
+    const internal::linked_ptr<internal::ExpectationBase>& an_expectation_base)
     : expectation_base_(an_expectation_base) {}
 
 Expectation::~Expectation() {}
@@ -868,9 +792,9 @@ Expectation::~Expectation() {}
 // Adds an expectation to a sequence.
 void Sequence::AddExpectation(const Expectation& expectation) const {
   if (*last_expectation_ != expectation) {
-    if (last_expectation_->expectation_base() != nullptr) {
-      expectation.expectation_base()->immediate_prerequisites_ +=
-          *last_expectation_;
+    if (last_expectation_->expectation_base() != NULL) {
+      expectation.expectation_base()->immediate_prerequisites_
+          += *last_expectation_;
     }
     *last_expectation_ = expectation;
   }
@@ -878,7 +802,7 @@ void Sequence::AddExpectation(const Expectation& expectation) const {
 
 // Creates the implicit sequence if there isn't one.
 InSequence::InSequence() {
-  if (internal::g_gmock_implicit_sequence.get() == nullptr) {
+  if (internal::g_gmock_implicit_sequence.get() == NULL) {
     internal::g_gmock_implicit_sequence.set(new Sequence);
     sequence_created_ = true;
   } else {
@@ -891,14 +815,8 @@ InSequence::InSequence() {
 InSequence::~InSequence() {
   if (sequence_created_) {
     delete internal::g_gmock_implicit_sequence.get();
-    internal::g_gmock_implicit_sequence.set(nullptr);
+    internal::g_gmock_implicit_sequence.set(NULL);
   }
 }
 
 }  // namespace testing
-
-#ifdef _MSC_VER
-#if _MSC_VER == 1900
-#pragma warning(pop)
-#endif
-#endif

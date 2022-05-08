@@ -26,6 +26,8 @@
 // THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+// Author: wan@google.com (Zhanyong Wan)
 
 // Google Mock - a framework for writing C++ mock classes.
 //
@@ -33,22 +35,13 @@
 // cardinalities can be defined by the user implementing the
 // CardinalityInterface interface if necessary.
 
-// IWYU pragma: private, include "gmock/gmock.h"
-// IWYU pragma: friend gmock/.*
-
-#ifndef GOOGLEMOCK_INCLUDE_GMOCK_GMOCK_CARDINALITIES_H_
-#define GOOGLEMOCK_INCLUDE_GMOCK_GMOCK_CARDINALITIES_H_
+#ifndef GMOCK_INCLUDE_GMOCK_GMOCK_CARDINALITIES_H_
+#define GMOCK_INCLUDE_GMOCK_GMOCK_CARDINALITIES_H_
 
 #include <limits.h>
-
-#include <memory>
 #include <ostream>  // NOLINT
-
 #include "gmock/internal/gmock-port.h"
 #include "gtest/gtest.h"
-
-GTEST_DISABLE_MSC_WARNINGS_PUSH_(4251 \
-/* class A needs to have dll-interface to be used by clients of class B */)
 
 namespace testing {
 
@@ -72,12 +65,10 @@ class CardinalityInterface {
   virtual int ConservativeLowerBound() const { return 0; }
   virtual int ConservativeUpperBound() const { return INT_MAX; }
 
-  // Returns true if and only if call_count calls will satisfy this
-  // cardinality.
+  // Returns true iff call_count calls will satisfy this cardinality.
   virtual bool IsSatisfiedByCallCount(int call_count) const = 0;
 
-  // Returns true if and only if call_count calls will saturate this
-  // cardinality.
+  // Returns true iff call_count calls will saturate this cardinality.
   virtual bool IsSaturatedByCallCount(int call_count) const = 0;
 
   // Describes self to an ostream.
@@ -86,8 +77,9 @@ class CardinalityInterface {
 
 // A Cardinality is a copyable and IMMUTABLE (except by assignment)
 // object that specifies how many times a mock function is expected to
-// be called.  The implementation of Cardinality is just a std::shared_ptr
-// to const CardinalityInterface. Don't inherit from Cardinality!
+// be called.  The implementation of Cardinality is just a linked_ptr
+// to const CardinalityInterface, so copying is fairly cheap.
+// Don't inherit from Cardinality!
 class GTEST_API_ Cardinality {
  public:
   // Constructs a null cardinality.  Needed for storing Cardinality
@@ -102,23 +94,21 @@ class GTEST_API_ Cardinality {
   int ConservativeLowerBound() const { return impl_->ConservativeLowerBound(); }
   int ConservativeUpperBound() const { return impl_->ConservativeUpperBound(); }
 
-  // Returns true if and only if call_count calls will satisfy this
-  // cardinality.
+  // Returns true iff call_count calls will satisfy this cardinality.
   bool IsSatisfiedByCallCount(int call_count) const {
     return impl_->IsSatisfiedByCallCount(call_count);
   }
 
-  // Returns true if and only if call_count calls will saturate this
-  // cardinality.
+  // Returns true iff call_count calls will saturate this cardinality.
   bool IsSaturatedByCallCount(int call_count) const {
     return impl_->IsSaturatedByCallCount(call_count);
   }
 
-  // Returns true if and only if call_count calls will over-saturate this
+  // Returns true iff call_count calls will over-saturate this
   // cardinality, i.e. exceed the maximum number of allowed calls.
   bool IsOverSaturatedByCallCount(int call_count) const {
     return impl_->IsSaturatedByCallCount(call_count) &&
-           !impl_->IsSatisfiedByCallCount(call_count);
+        !impl_->IsSatisfiedByCallCount(call_count);
   }
 
   // Describes self to an ostream
@@ -129,7 +119,7 @@ class GTEST_API_ Cardinality {
                                         ::std::ostream* os);
 
  private:
-  std::shared_ptr<const CardinalityInterface> impl_;
+  internal::linked_ptr<const CardinalityInterface> impl_;
 };
 
 // Creates a cardinality that allows at least n calls.
@@ -154,6 +144,4 @@ inline Cardinality MakeCardinality(const CardinalityInterface* c) {
 
 }  // namespace testing
 
-GTEST_DISABLE_MSC_WARNINGS_POP_()  //  4251
-
-#endif  // GOOGLEMOCK_INCLUDE_GMOCK_GMOCK_CARDINALITIES_H_
+#endif  // GMOCK_INCLUDE_GMOCK_GMOCK_CARDINALITIES_H_
