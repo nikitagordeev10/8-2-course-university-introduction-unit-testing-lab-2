@@ -20,7 +20,6 @@ int main()
     char cmdline[MAXLINE + 1];
     char *cmd;
     char *arg;
-    char *arg2;
 
     /* Создаем объект для представления текста */
     text txt = create_text();

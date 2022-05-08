@@ -25,7 +25,9 @@ void show(text txt);
  */
 void load(text txt, char *filename);
 
-
+/**
+* Сохраняем файл
+*/
 void save(text txt, char *filename);
 
 #endif

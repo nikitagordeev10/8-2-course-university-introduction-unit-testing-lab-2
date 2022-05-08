@@ -1,5 +1,5 @@
 *.o
-*.txt
+tests/input/local_instruction.txt
 editor/editor
 *.a
 .vscode/
@@ -8,4 +8,3 @@ Makefile
 build/
 text/Makefile
 editor/Makefile
-
