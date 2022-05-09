@@ -8,3 +8,5 @@ Makefile
 build
 *.gcda
 *.gcno
+qmake-lab-2.pro.user
+
