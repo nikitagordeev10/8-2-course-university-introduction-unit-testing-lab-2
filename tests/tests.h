@@ -2,14 +2,17 @@
 #define EQTEST_H
 #include <gtest/gtest.h>
 #include <gmock/gmock-matchers.h>
-#include <string>
-#include <fstream>
+#include <iostream>
 
-extern "C" {
-    #include <text.h>
-    #include "../editor/common.h"
+extern "C"{
+#include "text/text.h"
+#include "text/_text.h"
+#include "common.h"
 }
 
-TEST(ShowUnderscoresTest, showunderscores) {
-    ASSERT_EQ(showunderscores(/tests/input/loremd.txt), lorem_ipsum);
+TEST(simple_TEST, base)
+{
+    EXPECT_EQ(1, 1);
 }
+
+#endif // EQTEST_H

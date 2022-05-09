@@ -1,2 +1,3 @@
-# python
-*.pyc
+# Ignore CI build directory
+build/
+xcuserdata

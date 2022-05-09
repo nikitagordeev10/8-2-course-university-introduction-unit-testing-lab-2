@@ -1,10 +1,10 @@
 *.o
 tests/input/local_instruction.txt
-editor/editor
+app/editor
 *.a
-.vscode/
 .qmake.stash
+*.user
 Makefile
-build/
-text/Makefile
-editor/Makefile
+build
+*.gcda
+*.gcno

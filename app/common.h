@@ -9,7 +9,7 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-#include <text.h>
+#include "text/text.h"
 
 /* Декларирует неиспользуемый аргумент,
  * корректно подавляя предупреждение вида "unused parameter" */
@@ -25,9 +25,14 @@ void show(text txt);
  */
 void load(text txt, char *filename);
 
-/**
-* Сохраняем файл
-*/
 void save(text txt, char *filename);
+
+void move(text txt, int line, int pos);
+
+void showunderscores(text txt);
+
+void mpweb(text txt);
+
+void rn(text txt);
 
 #endif

@@ -14,27 +14,28 @@ QMAKE_CXXFLAGS += -fprofile-arcs -ftest-coverage
 QMAKE_CFLAGS += -fprofile-arcs -ftest-coverage
 LIBS += -lgcov
 
-DEFINES += INPUTDIR=\\\"$$PWD/\\\"
+DEFINES += INPUTDIR=\\\"$$PWD/input/\\\"
 
 HEADERS += tests.h \
-        ../editor/common.h \
-        ../text/text.h \
-        ../text/_text.h
+        ../app/common.h \
+        ../app/text/text.h \
+        ../app/text/_text.h
 
-SOURCES +=  main.cpp \
-        ../editor/load.c \
-        ../editor/move.c \
-        ../editor/mpweb.c \
-        ../editor/remove_next.c \
-        ../editor/save.c \
-        ../editor/show.c \
-        ../editor/showunderscores.c \
-        ../text/append_line.c \
-        ../text/create_text.c \
-        ../text/process_forward.c \
-        ../text/remove_all.c
+SOURCES += main.cpp \
+    ../app/load.c \
+    ../app/move.c \
+    ../app/mpweb.c \
+    ../app/remove_next.c \
+    ../app/save.c \
+    ../app/show.c \
+    ../app/showunderscores.c \
+    ../app/text/append_line.c \
+    ../app/text/create_text.c \
+    ../app/text/process_forward.c \
+    ../app/text/remove_all.c
 
-DISTFILES += ..tests/input/input.txt
 
-INCLUDEPATH += ../text \
-        ../editor
+INCLUDEPATH += ../app
+
+DISTFILES += \
+    tests/input/input.txt

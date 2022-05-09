@@ -6,7 +6,7 @@
 * This code is licensed under a MIT-style license.
 */
 
-#include "_text.h"
+#include "text/_text.h"
 
 void rn(text txt)
 {

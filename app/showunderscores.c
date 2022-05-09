@@ -10,8 +10,8 @@
 #include <assert.h>
 #include <stdlib.h>
 #include "common.h"
-#include "text.h"
-#include "_text.h"
+#include "text/_text.h"
+#include "text/text.h"
 
 static void showunderscores_line(int index, char *contents, int cursor, void *data);
 

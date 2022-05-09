@@ -59,6 +59,4 @@ void process_forward(
  */
 void remove_all(text txt);
 
-void move_crsr(text txt, int line, int col);
-
 #endif

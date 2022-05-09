@@ -1,4 +1,4 @@
- /**
+/**
  * remove_all.c -- реализует функцию очистки текста
  *
  * Copyright (c) 2017, Alexander Borodin <aborod@petrsu.ru>
