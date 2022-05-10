@@ -1,1 +1,2 @@
 [![CI/CD GitHub Actions](https://github.com/nikitagordeev10/8-2-course-university-introduction-unit-testing-lab-2/actions/workflows/test-action.yml/badge.svg)](https://github.com/nikitagordeev10/8-2-course-university-introduction-unit-testing-lab-2/actions/workflows/test-action.yml)
+[![Coverage Status](https://coveralls.io/repos/github/nikitagordeev10/8-2-course-university-introduction-unit-testing-lab-2/badge.svg?branch=main)](https://coveralls.io/github/nikitagordeev10/8-2-course-university-introduction-unit-testing-lab-2?branch=main)
