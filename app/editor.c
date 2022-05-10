@@ -81,11 +81,13 @@ int main()
             continue;
         }
         
+        /* */
         if (strcmp(cmd, "showunderscores") == 0) {
             showunderscores(txt);
             continue;
         }
 
+        /**/
         if (strcmp(cmd, "mpweb") == 0) {
             mpweb(txt);
             continue;

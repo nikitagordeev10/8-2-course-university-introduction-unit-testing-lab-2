@@ -8,7 +8,7 @@ SOURCES += editor.c \
         load.c \
         move.c \
         mpweb.c \
-        remove_next.c \
+        rn.c \
         save.c \
         show.c \
         showunderscores.c \

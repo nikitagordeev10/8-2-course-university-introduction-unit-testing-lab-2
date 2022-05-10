@@ -25,7 +25,7 @@ SOURCES += main.cpp \
     ../app/load.c \
     ../app/move.c \
     ../app/mpweb.c \
-    ../app/remove_next.c \
+    ../app/rn.c \
     ../app/save.c \
     ../app/show.c \
     ../app/showunderscores.c \
