@@ -14,7 +14,9 @@ extern "C"{
 
 /* =================== constants ===================  */
 
-char *input_file = INPUTDIR "/input.txt";
+char *input = INPUTDIR "/input.txt";
+char *no_spaces_input = INPUTDIR "/no_spaces_input.txt";
+char *unusual_spaces_input = INPUTDIR "/unusual_spaces_input.txt";
 
 /* ------------------- move.c -------------------  */
 
@@ -22,7 +24,7 @@ char *input_file = INPUTDIR "/input.txt";
 TEST(TestMove, within_text)
 {
     text txt = create_text();
-    load(txt, input_file);
+    load(txt, input);
     move(txt, 2, 3);
 
     //позиция в строке
@@ -46,7 +48,7 @@ TEST(TestMove, within_text)
 TEST(TestMove, outside_text_up)
 {
     text txt = create_text();
-    load(txt, input_file);
+    load(txt, input);
     move(txt, -500, 0);
 
     //позиция в строке
@@ -70,7 +72,7 @@ TEST(TestMove, outside_text_up)
 TEST(TestMove, outside_text_down)
 {
     text txt = create_text();
-    load(txt, input_file);
+    load(txt, input);
     move(txt, 500, 0);
 
     //позиция в строке
@@ -94,7 +96,7 @@ TEST(TestMove, outside_text_down)
 TEST(TestMove, outside_text_left)
 {
     text txt = create_text();
-    load(txt, input_file);
+    load(txt, input);
     move(txt, 1, -5);
 
     //позиция в строке
@@ -118,7 +120,7 @@ TEST(TestMove, outside_text_left)
 TEST(TestMove, outside_text_right)
 {
     text txt = create_text();
-    load(txt, input_file);
+    load(txt, input);
     move(txt, 1, 500000000);
 
     //позиция в строке
@@ -141,7 +143,7 @@ TEST(TestMove, outside_text_right)
 TEST(TestMove, zero_coordinates)
 {
     text txt = create_text();
-    load(txt, input_file);
+    load(txt, input);
     move(txt, 0, 0);
 
     //позиция в строке
@@ -167,7 +169,7 @@ TEST(TestLoad, existing_file) {
     text new_txt = create_text();
     std::string output;
     testing::internal::CaptureStdout();
-    load(new_txt, input_file);
+    load(new_txt, input);
     output = testing::internal::GetCapturedStdout();
 
     EXPECT_EQ(output, "");
@@ -190,7 +192,7 @@ TEST(TestLoad, non_existent_file) {
 TEST(TestMpweb, within_text)
 {
     text txt = create_text();
-    load(txt, input_file);
+    load(txt, input);
 
     node *current = txt->begin;
     move(txt, 1, 10);
@@ -258,11 +260,146 @@ TEST (TestSave, emply_txt_structure)
 
 /* ------------------- show.c -------------------  */
 
-TEST(TestShow, suite3)
+TEST(TestShow, last_line_in_text)
+{
+    text txt = create_text();
+    load(txt, input);
+    testing::internal::CaptureStdout();
+    show(txt);
+    std::string output = testing::internal::GetCapturedStdout();
+    int i = 0;
+    node *current = txt->begin;
+    while(current)
+    {
+        for (int j = 0; j < strlen(current->contents); j++)
+        {
+            EXPECT_EQ(output[i], current->contents[j]);
+            i++;
+        }
+        if (current != txt->end)
+            i++;
+        current = current->next;
+    }
+    EXPECT_EQ(output[i], '|');
+    remove_all(txt);
+}
+
+TEST(TestShow, second_line_in_text)
+{
+    text txt = create_text();
+    load(txt, input);
+    move(txt, 74, 2);
+    testing::internal::CaptureStdout();
+    show(txt);
+    std::string output = testing::internal::GetCapturedStdout();
+    int i = 0;
+    node *current = txt->begin;
+    while(current)
+    {
+        for (int j = 0; j < strlen(current->contents); j++)
+        {
+            if (current == txt->cursor->line
+                   && j == txt->cursor->position)
+            {
+                EXPECT_EQ(output[i], '|');
+                i++;
+            }
+            EXPECT_EQ(output[i], current->contents[j]);
+            i++;
+        }
+        i++;
+        current = current->next;
+    }
+    remove_all(txt);
+}
+
+TEST(TestShow, no_text)
 {
     text txt = create_text();
     testing::internal::CaptureStderr();
     show(txt);
+    std::string output = testing::internal::GetCapturedStderr();
+    EXPECT_EQ(output, "There are already no any lines in the text!\n");
+
+    remove_all(txt);
+}
+
+/* ------------------- showunderscores.c -------------------  */
+
+TEST(TestShowunderscores, real_file)
+{
+    text txt = create_text();
+    load(txt, input);
+
+    testing::internal::CaptureStdout();
+    showunderscores(txt);
+    std::string output = testing::internal::GetCapturedStdout();
+
+    // читаем ожидаемые строки из файла input.txt
+    char *filename = (char *)malloc(sizeof(char) * 1024);
+    sprintf(filename, "%s/with_spaces_ouput.txt", INPUTDIR);
+    std::ifstream f(filename);
+    free(filename);
+    std::string content;
+    content.assign( (std::istreambuf_iterator<char>(f) ),
+                    (std::istreambuf_iterator<char>()    ) );
+    content[content.length()-1] = '|';
+    content += "\n";
+    EXPECT_EQ(output, content);
+    remove_all(txt);
+}
+
+TEST(TestShowunderscores, without_spaces)
+{
+    text txt = create_text();
+    load(txt, no_spaces_input);
+
+    testing::internal::CaptureStdout();
+    showunderscores(txt);
+    std::string output = testing::internal::GetCapturedStdout();
+
+    // читаем ожидаемые строки из файла input.txt
+    char *filename = (char *)malloc(sizeof(char) * 1024);
+    sprintf(filename, "%s/no_spaces_output.txt", INPUTDIR);
+    std::ifstream f(filename);
+    free(filename);
+    std::string content;
+    content.assign( (std::istreambuf_iterator<char>(f) ),
+                    (std::istreambuf_iterator<char>()    ) );
+    content[content.length()-1] = '|';
+    content += "\n";
+    EXPECT_EQ(output, content);
+    remove_all(txt);
+}
+
+TEST(TestShowunderscores, unusual_spaces)
+{
+    text txt = create_text();
+    load(txt, unusual_spaces_input);
+
+    testing::internal::CaptureStdout();
+    showunderscores(txt);
+    std::string output = testing::internal::GetCapturedStdout();
+
+    // читаем ожидаемые строки из файла input.txt
+    char *filename = (char *)malloc(sizeof(char) * 1024);
+    sprintf(filename, "%s/unusual_spaces_output.txt", INPUTDIR);
+    std::ifstream f(filename);
+    free(filename);
+    std::string content;
+    content.assign( (std::istreambuf_iterator<char>(f) ),
+                    (std::istreambuf_iterator<char>()    ) );
+    content[content.length()-1] = '|';
+    content += "\n";
+    EXPECT_EQ(output, content);
+    remove_all(txt);
+}
+
+TEST(TestShowunderscores, empty)
+{
+    text txt = create_text();
+    testing::internal::CaptureStderr();
+    showunderscores(txt);
     std::string output = testing::internal::GetCapturedStderr();
     EXPECT_EQ(output, "There are already no any lines in the text!\n");
 

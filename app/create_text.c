@@ -1,5 +1,5 @@
 /**
- * create_text.c -- создает в памяти структуры для представления текста
+ * create_text.c - создает в памяти структуры для представления текста
  *
  * Copyright (c) 2017, Alexander Borodin <aborod@petrsu.ru>
  *
