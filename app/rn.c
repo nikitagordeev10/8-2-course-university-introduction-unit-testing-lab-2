@@ -1,5 +1,5 @@
 /**
-* rn.c -- реализует функцию удаления строки после текущей
+* rn.c - реализует функцию удаления строки после текущей
 *
 * Copyright (c) 2022, Nikita Gordeev <gordeev@petrsu.ru>
 *
@@ -8,6 +8,10 @@
 
 #include "text/_text.h"
 
+
+/**
+ * Удаляет строку после текущей
+ */
 void rn(text txt)
 {
    /* Проверяем, имеется ли текст */
@@ -27,9 +31,9 @@ void rn(text txt)
    /* Стартуем с первого элемента списка */
    node* current = txt->cursor->line;
    if (current->next) {
-   node* next = current->next;
-   current->next = next->next;
-   next->next->previous = current;
-   free(next);
+       node* next = current->next;
+       current->next = next->next;
+       next->next->previous = current;
+       free(next);
    }
 }

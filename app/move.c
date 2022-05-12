@@ -1,5 +1,5 @@
 /**
- * move.c - команду перемещения в заданную позициюа
+ * move.c - команда перемещения в заданную позицию
  *
  * Copyright (c) 2022, Nikita Gordeev <gordeev@petrsu.ru>
  *
@@ -11,6 +11,9 @@
 #include "text/_text.h"
 #include "text/text.h"
 
+/**
+ * Перемещает курсор в заданную позицию
+ */
 void move(text txt, int line, int col) {
     int k = 1;
     node *current = txt->begin;

@@ -16,7 +16,7 @@
 static void showunderscores_line(int index, char *contents, int cursor, void *data);
 
 /**
- * Выводит содержимое указанного файла на экран
+ * Выводит содержимое указанного файла на экран c заменой пробелов символом подчеркивания
  */
 void showunderscores(text txt)
 {

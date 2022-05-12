@@ -1,5 +1,5 @@
 /**
- * mpweb.c -- функция загрузки текста из файла
+ * mpweb.c - функция перемещения курсора в конец предыдущего слова
  *
  * Copyright (c) 2022, Gordeev Nikita <gordeev@petrsu.ru>
  *
@@ -11,7 +11,9 @@
 #include "text/_text.h"
 #include "text/text.h"
 
-
+/**
+ * Перемещает курсор в конец предыдущего слова
+ */
 void mpweb(text txt) {
     int pos = txt->cursor->position;
 

@@ -25,14 +25,29 @@ void show(text txt);
  */
 void load(text txt, char *filename);
 
+/**
+ * Загружает содержимое указанного файла
+ */
 void save(text txt, char *filename);
 
+/**
+ * Загружает содержимое указанного файла
+ */
 void move(text txt, int line, int pos);
 
+/**
+ * Загружает содержимое указанного файла
+ */
 void showunderscores(text txt);
 
+/**
+ * Загружает содержимое указанного файла
+ */
 void mpweb(text txt);
 
+/**
+ * Загружает содержимое указанного файла
+ */
 void rn(text txt);
 
 #endif

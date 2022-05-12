@@ -12,127 +12,261 @@ extern "C"{
 #include "common.h"
 }
 
-TEST(simple_TEST, base)
+/* =================== constants ===================  */
+
+char *input_file = INPUTDIR "/input.txt";
+
+/* ------------------- move.c -------------------  */
+
+/* Позитивный тест */
+TEST(TestMove, within_text)
 {
-    EXPECT_EQ(1, 1);
+    text txt = create_text();
+    load(txt, input_file);
+    move(txt, 2, 3);
+
+    //позиция в строке
+    EXPECT_EQ(txt->cursor->position, 3);
+
+    int line = 1;
+    node *current = txt->begin;
+    while(current != txt->cursor->line) {
+        line++;
+        current = current->next;
+    }
+
+    //номер строки
+    EXPECT_EQ(line, 2);
+
+    remove_all(txt);
 }
 
-//TEST(ShowunderscoresTest, string_matching) {
-//    // Сравниваемые строки
-//    char str1[]="12345";
-//    char str2[]="12305";
-//    int flag = 0;
 
-//    char a[] = showunderscores("asdf");
+/* Негативный тест */
+TEST(TestMove, outside_text_up)
+{
+    text txt = create_text();
+    load(txt, input_file);
+    move(txt, -500, 0);
 
-//    // Сравниваем две строки
-//    if (strcmp (str1, str2)==0)
-//       flag = 0;
-//    else
-//       flag = 1;
+    //позиция в строке
+    EXPECT_EQ(txt->cursor->position, 0);
 
-//    EXPECT_EQ(flag, 0);
-//}
+    int line = 1;
+    node *current = txt->begin;
+    while(current != txt->cursor->line) {
+        line++;
+        current = current->next;
+    }
 
-// load.c
-// Негативный тест
-//TEST(load, no_file) {
-//    text new_txt = create_text();
-//    std::string output;
-//    testing::internal::CaptureStdout();
-//    load(new_txt, "i.txt");
-//    output = testing::internal::GetCapturedStdout();
+    //номер строки
+    EXPECT_EQ(line, 1);
 
-//    ASSERT_EQ(output, "The file i.txt cannot be opened\n");
-//}
+    remove_all(txt);
+}
 
-//// Позитивный тест
-//TEST(TEST_load, suite1)
-//{
-//    text txt = create_text();
-//    char *filename = INPUTDIR "/input.txt";
-//    load(txt, filename);
 
-//    std::ifstream f;
-//    std::string output;
-//    node *current = txt->begin;
+/* Негативный тест */
+TEST(TestMove, outside_text_down)
+{
+    text txt = create_text();
+    load(txt, input_file);
+    move(txt, 500, 0);
 
-//    EXPECT_NE(txt->begin, nullptr);
-//    EXPECT_NE(txt->end, nullptr);
+    //позиция в строке
+    EXPECT_EQ(txt->cursor->position, 0);
 
-//    while (std::getline(f, output))
-//    {
-//        EXPECT_EQ(current->contents, output);
-//        current = current->next;
-//    }
-//    remove_all(txt);
-//}
+    int line = 1;
+    node *current = txt->begin;
+    while(current != txt->cursor->line) {
+        line++;
+        current = current->next;
+    }
 
-//// move.c
-//TEST(TEST_move_cursor, sute1)
-//{
-//    text txt = create_text();
-//    char *filename = INPUTDIR "/input.txt";
-//    load(txt, filename);
-//    move(txt, 2, 3);
-//    EXPECT_EQ(txt->cursor->position, 3);
-//    int k = 1;
-//    node *current = txt->begin;
-//    while(current != txt->cursor->line)
-//    {
-//        k++;
-//        current = current->next;
-//    }
-//    EXPECT_EQ(k, 2);
-//    remove_all(txt);
-//}
+    //номер строки
+    EXPECT_EQ(line, txt->length);
 
-//TEST(Test_m, cannot_m) {
-//    text txt = create_text();
-//    char *filename = INPUTDIR "/input.txt";
-//    load(txt, filename);
+    remove_all(txt);
+}
 
-//    std::string output;
-//    move(txt, 0, 10);
-//    output = testing::internal::GetCapturedStdout();
 
-//    ASSERT_EQ(output, "hellddo|\nworld\n");
-//    remove_all(txt);
-//}
+/* Негативный тест */
+TEST(TestMove, outside_text_left)
+{
+    text txt = create_text();
+    load(txt, input_file);
+    move(txt, 1, -5);
 
-//TEST(TEST_cursuo, test_mistake_line_argument_large)
-//{
-//    /*
-//     * Тест перемещения курсора.
-//     * Негативный тест.
-//     * Попытка поставить курсор в несуществующую строку (слишком большую).
-//     */
+    //позиция в строке
+    EXPECT_EQ(txt->cursor->position, 0);
 
-//    text txt = create_text();
-//    append_line(txt, "Example text in line 1.");
-//    append_line(txt, "Example text in line 2.");
-//    append_line(txt, "Example text in line 3.");
-//    move(txt, 100, 0);
-//    EXPECT_EQ(txt->cursor->position, 0);
-//    int k = 1;
-//    node *current = txt->begin;
-//    while(current != txt->cursor->line)
-//    {
-//        k++;
-//        current = current->next;
-//    }
-//    EXPECT_EQ(k, txt->cursor->position);
-//    remove_all(txt);
-//}
+    int line = 1;
+    node *current = txt->begin;
+    while(current != txt->cursor->line) {
+        line++;
+        current = current->next;
+    }
 
-// mpweb.c
-// remove_next.c
-// save.c
-// show.c
-// showunderscores.c
-// append_line.c
-// create_text.c
-// process_forward.c
+    //номер строки
+    EXPECT_EQ(line, 1);
 
+    remove_all(txt);
+}
+
+
+/* Позитивный тест */
+TEST(TestMove, outside_text_right)
+{
+    text txt = create_text();
+    load(txt, input_file);
+    move(txt, 1, 500000000);
+
+    //позиция в строке
+    EXPECT_EQ(txt->cursor->position, 500000000);
+
+    int line = 1;
+    node *current = txt->begin;
+    while(current != txt->cursor->line) {
+        line++;
+        current = current->next;
+    }
+
+    //номер строки
+    EXPECT_EQ(line, 1);
+
+    remove_all(txt);
+}
+
+/* Позитивный тест */
+TEST(TestMove, zero_coordinates)
+{
+    text txt = create_text();
+    load(txt, input_file);
+    move(txt, 0, 0);
+
+    //позиция в строке
+    EXPECT_EQ(txt->cursor->position, 0);
+
+    int line = 1;
+    node *current = txt->begin;
+    while(current != txt->cursor->line) {
+        line++;
+        current = current->next;
+    }
+
+    //номер строки
+    EXPECT_EQ(line, 1);
+
+    remove_all(txt);
+}
+
+/* ------------------- load.c -------------------  */
+
+/* Позитивный тест */
+TEST(TestLoad, existing_file) {
+    text new_txt = create_text();
+    std::string output;
+    testing::internal::CaptureStdout();
+    load(new_txt, input_file);
+    output = testing::internal::GetCapturedStdout();
+
+    EXPECT_EQ(output, "");
+}
+
+/* Негативный тест */
+TEST(TestLoad, non_existent_file) {
+    text new_txt = create_text();
+    std::string output;
+    testing::internal::CaptureStdout();
+    load(new_txt, "fakefile.txt");
+    output = testing::internal::GetCapturedStdout();
+
+    EXPECT_EQ(output, "The file fakefile.txt cannot be opened\n");
+}
+
+/* ------------------- mpweb.c -------------------  */
+
+/* Позитивный тест */
+TEST(TestMpweb, within_text)
+{
+    text txt = create_text();
+    load(txt, input_file);
+
+    node *current = txt->begin;
+    move(txt, 1, 10);
+    mpweb(txt);
+
+    int i = 0;
+    while(current) {
+      i++;
+      if (txt->cursor->line == current) {
+        break;
+      }
+      current = current->next;
+    }
+
+    EXPECT_EQ(txt->cursor->position, 7);
+    EXPECT_EQ(i, 1);
+
+    remove_all(txt);
+}
+
+/* ------------------- rn.c -------------------  */
+
+/* ------------------- save.c -------------------  */
+
+TEST (TestSave, default_save)
+{
+    /*
+     * Тест на сохранения файла.
+     * Позитивный тест.
+     */
+
+    text txt = create_text();
+    append_line(txt, "Example text in line.");
+
+    testing::internal::CaptureStdout();
+    save(txt, "example_result.txt");
+    remove_all(txt);
+
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_EQ(output, "Save file successeed!\n");
+    remove_all(txt);
+}
+
+TEST (TestSave, emply_txt_structure)
+{
+    /*
+     * Тест на сохранения файла.
+     * Негативный тест.
+     * Передаваемые параметры - пустая структура txt, NULL, пустое имя файла.
+     */
+
+    text txt = create_text();
+
+    testing::internal::CaptureStderr();
+    save(txt, "test_save.txt");
+    save(NULL, "test_save.txt");
+    append_line(txt, "Example text.");
+    save(txt, NULL);
+    save(txt, "");
+
+    std::string output = testing::internal::GetCapturedStderr();
+    EXPECT_EQ(output, "The text doesn't exist\nThe text doesn't exist\nFile (null) can't be opened\nFile  can't be opened\n");
+    remove_all(txt);
+}
+
+/* ------------------- show.c -------------------  */
+
+TEST(TestShow, suite3)
+{
+    text txt = create_text();
+    testing::internal::CaptureStderr();
+    show(txt);
+    std::string output = testing::internal::GetCapturedStderr();
+    EXPECT_EQ(output, "There are already no any lines in the text!\n");
+
+    remove_all(txt);
+}
 
 #endif // EQTEST_H

@@ -11,7 +11,9 @@
 #include "text/_text.h"
 #include "text/text.h"
 
-
+/**
+ * Сохраняет текст в буфере в указанный файл
+ */
 void save(text txt, char *filename) {
 
     FILE *f;
