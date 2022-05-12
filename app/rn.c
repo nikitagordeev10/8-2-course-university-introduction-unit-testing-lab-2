@@ -6,7 +6,7 @@
 * This code is licensed under a MIT-style license.
 */
 
-#include "text/_text.h"
+#include "_text.h"
 
 
 /**

@@ -12,15 +12,15 @@ SOURCES += editor.c \
         save.c \
         show.c \
         showunderscores.c \
-        text/append_line.c \
-        text/create_text.c \
-        text/process_forward.c \
-        text/remove_all.c \
+        append_line.c \
+        create_text.c \
+        process_forward.c \
+        remove_all.c \
 
 HEADERS += \
         common.h \
-        text/_text.h \
-        text/text.h
+        _text.h \
+        text.h
 
 QMAKE_CFLAGS += -Wall -Wextra
 

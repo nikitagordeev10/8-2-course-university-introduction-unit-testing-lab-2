@@ -8,8 +8,8 @@
 
 #include <stdio.h>
 #include "common.h"
-#include "text/_text.h"
-#include "text/text.h"
+#include "_text.h"
+#include "text.h"
 
 /**
  * Перемещает курсор в заданную позицию

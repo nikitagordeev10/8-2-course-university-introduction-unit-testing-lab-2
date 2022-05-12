@@ -9,7 +9,7 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-#include "text/text.h"
+#include "text.h"
 
 /* Декларирует неиспользуемый аргумент,
  * корректно подавляя предупреждение вида "unused parameter" */
