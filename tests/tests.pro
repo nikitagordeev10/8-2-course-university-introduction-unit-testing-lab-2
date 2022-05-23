@@ -39,10 +39,6 @@ INCLUDEPATH += ../app
 
 DISTFILES += \
     input/empty_file_input.txt \
-    input/empty_file_output.txt \
     input/no_spaces_input.txt \
-    input/no_spaces_output.txt \
     input/unusual_spaces_input.txt \
-    input/unusual_spaces_output.txt \
-    input/with_spaces_ouput.txt \
     tests/input/input.txt

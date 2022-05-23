@@ -49,7 +49,10 @@ void mpweb(text txt) {
     /* Цикл с поиском слова */
     for (i=pos; contents[i] != ' '; i--) {
         /* Проверка на конец слова и кол-во выведенных символов */
-        if (contents[i] == ' ')
+        if (contents[i] == ' ' || contents[i] == '?' || contents[i] == '.' || contents[i] == '!')
+            break;
+
+        if (i == 0)
             break;
 
         /* Проверка на букву */

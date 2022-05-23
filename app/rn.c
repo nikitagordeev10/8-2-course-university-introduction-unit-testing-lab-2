@@ -21,7 +21,7 @@ void rn(text txt)
    }
 
    /* Если список изначально пуст, делать ничего не надо */
-   if (txt->length == 0) {
+   if (txt->length == 0 || txt->cursor->line == 0) {
        return;
    }
 
@@ -30,10 +30,26 @@ void rn(text txt)
 
    /* Стартуем с первого элемента списка */
    node* current = txt->cursor->line;
+
+   // если (есть строка после текущей)
    if (current->next) {
+
+       // получаем указатель на следующую строку
        node* next = current->next;
+
+
+       /* Проверяем, имеется ли текст */
+       if (txt == NULL || current == 0 || txt->length == 0  || current->next == 0 || next->next == 0 ) {
+           return;
+       }
+
+       // текущая строка -> следующая строка = строка после следующей
        current->next = next->next;
+
+       // строка после следующей -> предыдущая строка = текущая
        next->next->previous = current;
+
+       // очистить память следующей строки
        free(next);
    }
 }
